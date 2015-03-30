@@ -46,13 +46,73 @@ class GeoCache
     /**
      * @ORM\Column(type="string", length=100)
      */
-    protected $cacheName;
+    protected $name;
 
     /**
      * @ORM\Column(type="integer")
      */
-    protected $cacheType;
-    private $datePlaced;
+    protected $type;
+
+    /**
+     * @ORM\Column(type="float")
+     */
+    protected $latitude;
+
+    /**
+     * @ORM\Column(type="float")
+     */
+    protected $longitude;
+
+    /**
+     * @ORM\Column(type="datetime", name="date_placed")
+     */
+    protected $datePlaced;
+
+    /**
+     * @ORM\Column(type="datetime", name="date_modified")
+     */
+
+    protected $dateModified;
+
+    /**
+     * @ORM\Column(type="datetime", name="date_created")
+     */
+    protected $dateCreated;
+
+    /**
+     * @ORM\Column(type="string")
+     */
+    protected $url;
+
+protected $foundCount
+protected $notFoundCount
+protected $size
+protected $difficulty
+protected $terrain
+protected $rating -> NULL
+protected $rating_votes -> integer 0
+protected $recommendations -> integer 0
+protected $req_passwd -> bool FALSE
+protected $last_found -> NULL
+protected $willattends -> integer 0
+protected $trip_time -> NULL
+protected $trip_distance -> NULL
+protected $gc_code -> string (7) "GC4913C"
+protected $owner -> object stdClass (3)
+protected $descriptions -> object stdClass (1)
+protected $hints -> object stdClass (1)
+protected $hints2 -> object stdClass (1)
+protected $images -> array (0)
+protected $preview_image -> NULL
+protected $attr_acodes -> array (1)
+protected $trackables -> array (0)
+protected $trackables_count -> integer 0
+protected $alt_wpts -> array (0)
+protected $country -> string (7) "Rumunia"
+protected $state -> string (14) "Sud - Muntenia"
+protected $protection_areas -> array (0)
+
+
     private $cacheLocation = array();
 
 
@@ -64,7 +124,7 @@ class GeoCache
 
 	/**
 	 * geocache coordinates object (instance of \lib\Objects\Coordinates\Coordinates class)
-	 * @var $coordinates \lib\Objects\Coordinates\Coordinates
+	 * @var $coordinates \Oc\CoreBundle\Entity\Coordinates\Coordinates;
 	 */
 	private $coordinates;
 
