@@ -1,0 +1,3 @@
+oc_import_homepage:
+    path:     /import/{ocToImport}
+    defaults: { _controller: OcImportBundle:Default:import }
