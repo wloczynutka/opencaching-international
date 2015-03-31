@@ -25,6 +25,7 @@ class DefaultController extends Controller
         switch ($ocToImport){
             case 'romania':
                 $importHandler = new Romania();
+                $importHandler->setDoctrine($this->getDoctrine());
                 break;
         }
 

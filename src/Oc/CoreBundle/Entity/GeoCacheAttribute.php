@@ -27,7 +27,7 @@ class GeoCacheAttribute
     /**
      * @ORM\Column(type="string", length=2)
      */
-	protected $attributeId;
+	protected $identifier;
   
 
     /**
@@ -43,12 +43,12 @@ class GeoCacheAttribute
     /**
      * Set attributeId
      *
-     * @param string $attributeId
+     * @param string $identifier
      * @return GeoCacheAttribute
      */
-    public function setAttributeId($attributeId)
+    public function setIdentifier($identifier)
     {
-        $this->attributeId = $attributeId;
+        $this->identifier = $identifier;
 
         return $this;
     }
@@ -58,9 +58,9 @@ class GeoCacheAttribute
      *
      * @return string 
      */
-    public function getAttributeId()
+    public function getIdentifier()
     {
-        return $this->attributeId;
+        return $this->identifier;
     }
 
     /**
@@ -72,7 +72,6 @@ class GeoCacheAttribute
     public function setGeoCacheId(\Oc\CoreBundle\Entity\GeoCache $geoCacheId = null)
     {
         $this->geoCacheId = $geoCacheId;
-
         return $this;
     }
 

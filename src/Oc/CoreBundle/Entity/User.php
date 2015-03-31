@@ -34,6 +34,11 @@ class User extends BaseUser
      */
     protected $ownedGeoCaches;
 
+    /**
+     * @ORM\Column(type="string")
+     * url to origin user profile
+     */
+    protected $url;
 
 
     public function __construct()
@@ -43,7 +48,7 @@ class User extends BaseUser
     }
 
 	public function loadOwnedGeocaches() {
-		$this->ownedGeoCaches = newArrayCollection();
+		$this->ownedGeoCaches = new ArrayCollection();
 	}
 
     /**
@@ -65,7 +70,6 @@ class User extends BaseUser
     public function setOriginIdentifier($originIdentifier)
     {
         $this->originIdentifier = $originIdentifier;
-
         return $this;
     }
 
@@ -88,7 +92,6 @@ class User extends BaseUser
     public function setUuid($uuid)
     {
         $this->uuid = $uuid;
-
         return $this;
     }
 
@@ -132,5 +135,28 @@ class User extends BaseUser
     public function getOwnedGeoCaches()
     {
         return $this->ownedGeoCaches;
+    }
+
+    /**
+     * Set url
+     *
+     * @param string $url
+     * @return User
+     */
+    public function setUrl($url)
+    {
+        $this->url = $url;
+
+        return $this;
+    }
+
+    /**
+     * Get url
+     *
+     * @return string 
+     */
+    public function getUrl()
+    {
+        return $this->url;
     }
 }

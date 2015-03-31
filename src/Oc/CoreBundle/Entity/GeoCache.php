@@ -32,6 +32,10 @@ class GeoCache
     const STATUS_NOTYETAVAILABLE = 5;
     const STATUS_BLOCKED = 6;
 
+    const SIZE_NOTSPECIFIED = 0;
+    const SIZE_MICRO = 1;
+    const SIZE_SMALL = 2;
+    const SIZE_REGULAR = 3;
     /**
      * @ORM\Column(type="integer")
      * @ORM\Id
@@ -40,7 +44,7 @@ class GeoCache
     protected $id;
 
     /**
-     * @ORM\Column(type="string", length=8)
+     * @ORM\Column(type="string", length=8, unique=true)
      */
     protected $code;
 
@@ -121,7 +125,7 @@ class GeoCache
 	protected $terrain;
 
 	/**
-	 * @ORM\Column(type="decimal")
+	 * @ORM\Column(type="float")
 	 */
 	protected $rating;
 	
@@ -163,11 +167,9 @@ class GeoCache
     /**
      * @ORM\OneToMany(targetEntity="GeoCacheAttribute", mappedBy="geoCacheId")
      */
-	protected $atttributes;
+	protected $attributes;
 
-	protected $trackables;
-	protected $alt_wpts;
-	protected $protection_areas;
+	protected $wayPoints;
 
     private $cacheLocation = array();
 
@@ -406,10 +408,9 @@ class GeoCache
      * @param \DateTime $datePlaced
      * @return GeoCache
      */
-    public function setDatePlaced($datePlaced)
+    public function setDatePlaced(\DateTime $datePlaced)
     {
         $this->datePlaced = $datePlaced;
-
         return $this;
     }
 
@@ -442,10 +443,9 @@ class GeoCache
      * @param \DateTime $dateCreated
      * @return GeoCache
      */
-    public function setDateCreated($dateCreated)
+    public function setDateCreated(\DateTime $dateCreated)
     {
         $this->dateCreated = $dateCreated;
-
         return $this;
     }
 
@@ -622,7 +622,6 @@ class GeoCache
 
     /**
      * Set rating
-     *
      * @param string $rating
      * @return GeoCache
      */
@@ -761,10 +760,10 @@ class GeoCache
     /**
      * Add images
      *
-     * @param \Oc\CoreBundle\Entity\GeoCache\Image $images
+     * @param \Oc\CoreBundle\Entity\Image $images
      * @return GeoCache
      */
-    public function addImage(\Oc\CoreBundle\Entity\GeoCache\Image $images)
+    public function addImage(\Oc\CoreBundle\Entity\Image $images)
     {
         $this->images[] = $images;
 
@@ -794,13 +793,12 @@ class GeoCache
     /**
      * Set owner
      *
-     * @param \Oc\CoreBundle\Entity\GeoCache\User $owner
+     * @param \Oc\CoreBundle\Entity\User $owner
      * @return GeoCache
      */
-    public function setOwner(\Oc\CoreBundle\Entity\GeoCache\User $owner = null)
+    public function setOwner(\Oc\CoreBundle\Entity\User $owner = null)
     {
         $this->owner = $owner;
-
         return $this;
     }
 
@@ -845,7 +843,7 @@ class GeoCache
      */
     public function addAtttribute(\Oc\CoreBundle\Entity\GeoCacheAttribute $atttributes)
     {
-        $this->atttributes[] = $atttributes;
+        $this->attributes[] = $atttributes;
 
         return $this;
     }
@@ -857,7 +855,7 @@ class GeoCache
      */
     public function removeAtttribute(\Oc\CoreBundle\Entity\GeoCacheAttribute $atttributes)
     {
-        $this->atttributes->removeElement($atttributes);
+        $this->attributes->removeElement($atttributes);
     }
 
     /**
@@ -865,9 +863,9 @@ class GeoCache
      *
      * @return \Doctrine\Common\Collections\Collection 
      */
-    public function getAtttributes()
+    public function getAttributes()
     {
-        return $this->atttributes;
+        return $this->attributes;
     }
 
     /**
