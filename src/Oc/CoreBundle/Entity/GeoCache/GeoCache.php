@@ -191,16 +191,6 @@ protected $protection_areas -> array (0)
         return $this->altitude;
     }
 
-    public function getCacheId()
-    {
-        return $this->id;
-    }
-
-    public function getWaypointId()
-    {
-        return $this->code;
-    }
-
     /**
      * @return \lib\Objects\User\User
      */

@@ -4,6 +4,7 @@ namespace Oc\CoreBundle\Entity;
 
 use FOS\UserBundle\Model\User as BaseUser;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity
@@ -24,15 +25,112 @@ class User extends BaseUser
     protected $originIdentifier;
 
     /**
-     * @ORM\Column(type="string", length=100, name="origin_uuid")
+     * @ORM\Column(type="guid", name="uuid")
      */
-    protected $originUuid;
+    protected $uuid;
+
+    /**
+     * @ORM\OneToMany(targetEntity="GeoCache", mappedBy="owner")
+     */
+    protected $ownedGeoCaches;
 
 
 
     public function __construct()
     {
         parent::__construct();
-        // your own logic
+        $this->loadOwnedGeocaches();
+    }
+
+	public function loadOwnedGeocaches() {
+		$this->ownedGeoCaches = newArrayCollection();
+	}
+
+    /**
+     * Get id
+     *
+     * @return integer 
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * Set originIdentifier
+     *
+     * @param integer $originIdentifier
+     * @return User
+     */
+    public function setOriginIdentifier($originIdentifier)
+    {
+        $this->originIdentifier = $originIdentifier;
+
+        return $this;
+    }
+
+    /**
+     * Get originIdentifier
+     *
+     * @return integer 
+     */
+    public function getOriginIdentifier()
+    {
+        return $this->originIdentifier;
+    }
+
+    /**
+     * Set uuid
+     *
+     * @param guid $uuid
+     * @return User
+     */
+    public function setUuid($uuid)
+    {
+        $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    /**
+     * Get uuid
+     *
+     * @return guid 
+     */
+    public function getUuid()
+    {
+        return $this->uuid;
+    }
+
+    /**
+     * Add ownedGeoCaches
+     *
+     * @param \Oc\CoreBundle\Entity\GeoCache $ownedGeoCaches
+     * @return User
+     */
+    public function addOwnedGeoCach(\Oc\CoreBundle\Entity\GeoCache $ownedGeoCaches)
+    {
+        $this->ownedGeoCaches[] = $ownedGeoCaches;
+        return $this;
+    }
+
+    /**
+     * Remove ownedGeoCaches
+     *
+     * @param \Oc\CoreBundle\Entity\GeoCache $ownedGeoCaches
+     */
+    public function removeOwnedGeoCach(\Oc\CoreBundle\Entity\GeoCache $ownedGeoCaches)
+    {
+        $this->ownedGeoCaches->removeElement($ownedGeoCaches);
+    }
+
+    /**
+     * Get ownedGeoCaches
+     *
+     * @return \Doctrine\Common\Collections\Collection 
+     */
+    public function getOwnedGeoCaches()
+    {
+        return $this->ownedGeoCaches;
     }
 }
