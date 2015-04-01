@@ -19,7 +19,7 @@ class GeoCacheDescription
     protected $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity="GeoCache", inversedBy="images")
+     * @ORM\ManyToOne(targetEntity="GeoCache", inversedBy="descriptions")
      * @ORM\JoinColumn(name="geocache_id", referencedColumnName="id")
      */
     protected $geoCacheId;

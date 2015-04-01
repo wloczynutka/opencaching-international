@@ -169,7 +169,10 @@ class GeoCache
      */
 	protected $attributes;
 
-	protected $wayPoints;
+    /**
+     * @ORM\OneToMany(targetEntity="GeoCacheWaypoint", mappedBy="geoCache")
+     */
+	protected $waypoints;
 
     private $cacheLocation = array();
 
@@ -697,7 +700,6 @@ class GeoCache
     public function setLastFound($lastFound)
     {
         $this->lastFound = $lastFound;
-
         return $this;
     }
 
@@ -720,7 +722,6 @@ class GeoCache
     public function setCountry($country)
     {
         $this->country = $country;
-
         return $this;
     }
 
@@ -743,7 +744,6 @@ class GeoCache
     public function setState($state)
     {
         $this->state = $state;
-
         return $this;
     }
 
@@ -760,24 +760,23 @@ class GeoCache
     /**
      * Add images
      *
-     * @param \Oc\CoreBundle\Entity\Image $images
+     * @param \Oc\CoreBundle\Entity\Image $image
      * @return GeoCache
      */
-    public function addImage(\Oc\CoreBundle\Entity\Image $images)
+    public function addImage(\Oc\CoreBundle\Entity\Image $image)
     {
-        $this->images[] = $images;
-
+        $this->images[] = $image;
         return $this;
     }
 
     /**
      * Remove images
      *
-     * @param \Oc\CoreBundle\Entity\GeoCache\Image $images
+     * @param \Oc\CoreBundle\Entity\Image $image
      */
-    public function removeImage(\Oc\CoreBundle\Entity\GeoCache\Image $images)
+    public function removeImage(\Oc\CoreBundle\Entity\Image $image)
     {
-        $this->images->removeElement($images);
+        $this->images->removeElement($image);
     }
 
     /**
@@ -889,5 +888,59 @@ class GeoCache
     public function getStatus()
     {
         return $this->status;
+    }
+
+    /**
+     * Add attributes
+     *
+     * @param \Oc\CoreBundle\Entity\GeoCacheAttribute $attribute
+     * @return GeoCache
+     */
+    public function addAttribute(\Oc\CoreBundle\Entity\GeoCacheAttribute $attribute)
+    {
+        $this->attributes[] = $attribute;
+        return $this;
+    }
+
+    /**
+     * Remove attributes
+     *
+     * @param \Oc\CoreBundle\Entity\GeoCacheAttribute $attributes
+     */
+    public function removeAttribute(\Oc\CoreBundle\Entity\GeoCacheAttribute $attributes)
+    {
+        $this->attributes->removeElement($attributes);
+    }
+
+    /**
+     * Add waypoints
+     *
+     * @param \Oc\CoreBundle\Entity\GeoCacheWaypoint $waypoint
+     * @return GeoCache
+     */
+    public function addWaypoint(\Oc\CoreBundle\Entity\GeoCacheWaypoint $waypoint)
+    {
+        $this->waypoints[] = $waypoint;
+        return $this;
+    }
+
+    /**
+     * Remove waypoints
+     *
+     * @param \Oc\CoreBundle\Entity\GeoCacheWaypoint $waypoint
+     */
+    public function removeWaypoint(\Oc\CoreBundle\Entity\GeoCacheWaypoint $waypoint)
+    {
+        $this->waypoints->removeElement($waypoint);
+    }
+
+    /**
+     * Get waypoints
+     *
+     * @return \Doctrine\Common\Collections\Collection 
+     */
+    public function getWaypoints()
+    {
+        return $this->waypoints;
     }
 }

@@ -3,10 +3,12 @@
 namespace Oc\ImportBundle\ImportFactory;
 
 use Oc\CoreBundle\Entity\GeoCache;
+use Oc\CoreBundle\Entity\GeoCacheWaypointType;
 use \Oc\CoreBundle\Entity\User;
 use \Oc\CoreBundle\Entity\GeoCacheDescription;
 use \Oc\CoreBundle\Entity\GeoCacheAttribute;
 use \Oc\CoreBundle\Entity\Image;
+use \Oc\CoreBundle\Entity\GeoCacheWaypoint;
 use Symfony\Component\HttpFoundation\Response;
 
 class Import
@@ -14,6 +16,8 @@ class Import
     protected $ocNodeIdentifier = null;
 
     protected $doctrine;
+
+    private $temp;
 
     /**
      * @param \Doctrine\Bundle\DoctrineBundle\Registry $doctrine
@@ -71,10 +75,8 @@ class Import
             $this->addDescriptionsFromOkapi($geoCache, $import->descriptions, $import->hints, $entityManager);
             $this->addImagesFromOkapi($geoCache, $import->images, $entityManager);
             $this->addAttributesFromOkapi($geoCache, $import->attr_acodes, $entityManager);
+            $this->addWaypointsFromOkapi($geoCache, $import->alt_wpts, $entityManager);
 
-            if(!empty($import->alt_wpts)){
-                dd($import->alt_wpts);
-            }
 //            dd($import, $geoCache);
 
             $entityManager->persist($geoCache);
@@ -201,5 +203,42 @@ class Import
                 $entityManager->persist($geoCacheAttribute);
             }
         }
+    }
+
+    private function addWaypointsFromOkapi(GeoCache $geoCache, $waypoints, $entityManager)
+    {
+        if(!empty($waypoints)){
+            foreach ($waypoints as $waypoint) {
+                $coordinates = explode('|', $waypoint->location);
+                $geoCacheWaypoint = new GeoCacheWaypoint();
+                $geoCacheWaypoint
+                    ->setName($waypoint->name)
+                    ->setLatitude($coordinates[0])
+                    ->setLongitude($coordinates[1])
+                    ->setType($this->buildGeocacheWaypointTypeFromOkapi($waypoint, $entityManager))
+                    ->setDescription($waypoint->description)
+                    ->setGeoCache($geoCache);
+                $geoCache->addWaypoint($geoCacheWaypoint);
+                $entityManager->persist($geoCacheWaypoint);
+            }
+        }
+    }
+
+    private function buildGeocacheWaypointTypeFromOkapi($waypoint, $entityManager){
+        if(isset($this->temp['addedGeoCacheWaypointType'][$waypoint->type])){
+            $geoCacheWaypointType = $this->temp['addedGeoCacheWaypointType'][$waypoint->type];
+        } else {
+            $geoCacheWaypointType = $this->doctrine->getRepository('Oc\CoreBundle\Entity\GeoCacheWaypointType')->findOneByTypeShort($waypoint->type);
+        }
+        if(!$geoCacheWaypointType){
+            $geoCacheWaypointType = new GeoCacheWaypointType();
+            $geoCacheWaypointType
+                ->setName($waypoint->type_name)
+                ->setSymbol($waypoint->sym)
+                ->setTypeShort($waypoint->type);
+            $entityManager->persist($geoCacheWaypointType);
+            $this->temp['addedGeoCacheWaypointType'][$waypoint->type] = $geoCacheWaypointType;
+        }
+        return $geoCacheWaypointType;
     }
 }

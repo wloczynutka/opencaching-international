@@ -1,6 +1,6 @@
 <?php
 
-namespace lib\Objects\GeoCache;
+namespace Oc\CoreBundle\Entity;
 
 /**
  * Description of GeoCacheLog
