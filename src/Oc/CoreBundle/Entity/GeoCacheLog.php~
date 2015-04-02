@@ -31,12 +31,7 @@ class GeoCacheLog
     const LOGTYPE_COMMENT = 3;
     const LOGTYPE_MOVED = 4;
     const LOGTYPE_NEEDMAINTENANCE = 5;
-    const LOGTYPE_ARCHIVED = 6;
     const LOGTYPE_ATTENDED = 7;
-    const LOGTYPE_DEACTIVATED = 8;
-    const LOGTYPE_SERVICED = 9;
-    const LOGTYPE_ACTIVATED = 10;
-    const LOGTYPE_WILLATTEND = 11;
 
     /**
      * @ORM\Column(type="integer")

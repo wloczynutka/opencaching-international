@@ -49,12 +49,6 @@ class GeoCache
     protected $code;
 
     /**
-     * @ORM\Column(type="integer")
-     * @var integer
-     */
-    protected $source;
-
-    /**
      * @ORM\Column(type="string", length=100)
      */
     protected $name;
@@ -986,28 +980,5 @@ class GeoCache
     public function getLogs()
     {
         return $this->logs;
-    }
-
-    /**
-     * Set source
-     *
-     * @param integer $source
-     * @return GeoCache
-     */
-    public function setSource($source)
-    {
-        $this->source = $source;
-
-        return $this;
-    }
-
-    /**
-     * Get source
-     *
-     * @return integer 
-     */
-    public function getSource()
-    {
-        return $this->source;
     }
 }

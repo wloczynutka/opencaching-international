@@ -7,6 +7,7 @@ class Romania extends Import
     public function __construct()
     {
         $this->ocNodeIdentifier = 'ro';
+        $this->ocNodeIdentifierInt = 16;
     }
 
 }

@@ -9,11 +9,13 @@ use \Oc\CoreBundle\Entity\GeoCacheDescription;
 use \Oc\CoreBundle\Entity\GeoCacheAttribute;
 use \Oc\CoreBundle\Entity\Image;
 use \Oc\CoreBundle\Entity\GeoCacheWaypoint;
+use \Oc\CoreBundle\Entity\GeoCacheLog;
 use Symfony\Component\HttpFoundation\Response;
 
 class Import
 {
     protected $ocNodeIdentifier = null;
+    protected $ocNodeIdentifierInt;
 
     protected $doctrine;
 
@@ -22,31 +24,101 @@ class Import
     /**
      * @param \Doctrine\Bundle\DoctrineBundle\Registry $doctrine
      */
-    public function setDoctrine($doctrine){
+    public function setDoctrine($doctrine)
+	{
         $this->doctrine = $doctrine;
     }
 
     public function importDump()
     {
-        $importFilesIndex = json_decode(file_get_contents(__DIR__.'/dumpsToImport/'.$this->ocNodeIdentifier.'/index.json'));
+//        ini_set('max_execution_time', 300);
+        set_time_limit(0);
+		$importFilesIndex = json_decode(file_get_contents(__DIR__.'/dumpsToImport/'.$this->ocNodeIdentifier.'/index.json'));
 //        d($importFilesIndex);
         foreach ($importFilesIndex->data_files as $file) {
             $partToImport = json_decode(file_get_contents(__DIR__.'/dumpsToImport/'.$this->ocNodeIdentifier.'/'.$file));
-			foreach ($partToImport as $importGeoCache) {
-				$this->setGeocache($importGeoCache->data);
-			}
-            dd($partToImport);
+			$this->importObjects($partToImport);
+//          dd($partToImport);
         }
 
     }
 
-	private function setGeocache($import) {
+	private function importObjects($partToImport)
+	{
+		foreach ($partToImport as $object) {
+			if($object->object_type == 'geocache'){
+				$this->importGeocache($object->data);
+			} elseif($object->object_type == 'log') {
+				$this->importLog($object);
+			} else {
+				dd('TODO: nieznany typ obiektu??');
+			}
+		}
+	}
+
+	/**
+	 * import or update geocache logs from okapi
+	 * @param stdClass $data
+	 */
+	private function importLog($data)
+	{
+		$entityManager = $this->doctrine->getManager();
+		$geoCache = $this->doctrine->getRepository('Oc\CoreBundle\Entity\GeoCache')->findOneByCode($data->data->cache_code);
+		if(!$geoCache){
+			dd('barak geoCache', $data);
+		}
+		$geoCacheLog = $this->doctrine->getRepository('Oc\CoreBundle\Entity\GeoCacheLog')->findOneByUuid($data->data->uuid);
+		if(!$geoCacheLog){
+			$geoCacheLog = new GeoCacheLog();
+		}
+		$geoCacheLog
+				->setUuid($data->data->uuid)
+				->setType($this->parseOkapiLogType($data->data->type))
+				->setDateTime(new \DateTime($data->data->date))
+				->setRecommendation($data->data->was_recommended)
+				->setText($data->data->comment)
+				->setGeoCache($geoCache)
+				->setAuthor($this->buildUser($data->data->user, $entityManager))
+		;
+		$entityManager->persist($geoCacheLog);
+		$entityManager->flush();		
+	}
+
+	private function parseOkapiLogType($okapiLogtype)
+	{
+		switch ($okapiLogtype) {
+			case 'Found it':
+				return GeoCacheLog::LOGTYPE_FOUNDIT;
+			case 'Comment':
+				return GeoCacheLog::LOGTYPE_COMMENT;
+			case 'Archived':
+				return GeoCacheLog::LOGTYPE_ARCHIVED;
+			case 'Temporarily unavailable':
+				return GeoCacheLog::LOGTYPE_DEACTIVATED;
+			case 'Maintenance performed':
+				return GeoCacheLog::LOGTYPE_SERVICED;
+			case 'Attended':
+				return GeoCacheLog::LOGTYPE_ATTENDED;
+			case 'Ready to search':
+				return GeoCacheLog::LOGTYPE_ACTIVATED;
+			case 'Will attend':
+				return GeoCacheLog::LOGTYPE_WILLATTEND;
+			default:
+				dd('TODO: dodac brakujacy typ logu', $okapiLogtype);
+		}
+	}
+
+	private function importGeocache($import)
+	{
 		$nId = $this->ocNodeIdentifier;
+		if(!isset($import->location)){
+			dd($import);
+		}
 		$coordinates = explode('|', $import->location);
 
+        $entityManager = $this->doctrine->getManager();
         $geoCache = $this->doctrine->getRepository('Oc\CoreBundle\Entity\GeoCache')->findOneByCode($import->code);
         if(!$geoCache) { /*create new geoCache*/
-            $entityManager = $this->doctrine->getManager();
             $geoCache = new GeoCache();
             $geoCache->setCode($import->code)
                 ->setName($import->names->$nId)
@@ -71,6 +143,7 @@ class Import
                 ->setUrl($import->url)
                 ->setCountry($import->country)
                 ->setState($import->state)
+                ->setSource($this->ocNodeIdentifierInt)
                 ;
             $this->addDescriptionsFromOkapi($geoCache, $import->descriptions, $import->hints, $entityManager);
             $this->addImagesFromOkapi($geoCache, $import->images, $entityManager);
@@ -91,12 +164,19 @@ class Import
 	 * convert Okapi geocache type to our format
 	 * @param type $okapiType
 	 */
-	public function parseGeocacheType($okapiType) {
+	public function parseGeocacheType($okapiType)
+	{
 		switch ($okapiType) {
 			case 'Event':
 				return GeoCache::TYPE_EVENT;
             case 'Traditional':
                 return GeoCache::TYPE_TRADITIONAL;
+			case 'Other':
+				return GeoCache::TYPE_OTHERTYPE;
+			case 'Quiz':
+				return GeoCache::TYPE_QUIZ;
+			case 'Multi':
+				return GeoCache::TYPE_MULTICACHE;
 			default:
 				dd('dodać typ', $okapiType);
 		}
@@ -106,7 +186,8 @@ class Import
 	 * convert Okapi geocache type to our format
 	 * @param type $okapiType
 	 */
-	public function parseGeocacheStatus($okapiStatus) {
+	public function parseGeocacheStatus($okapiStatus)
+	{
 		switch ($okapiStatus) {
 			case 'Archived':
 				return GeoCache::STATUS_ARCHIVED;
@@ -123,7 +204,8 @@ class Import
 	 * convert Okapi geocache type to our format
 	 * @param type $okapiType
 	 */
-	public function parseGeocacheSize($import) {
+	public function parseGeocacheSize($import)
+	{
 		switch ($import->size2) {
 			case 'none':
 				return GeoCache::SIZE_NOTSPECIFIED;
@@ -138,8 +220,12 @@ class Import
 		}
 	}
 
-    private function buildUser($owner, $entityManager){
-        $user = $this->doctrine->getRepository('Oc\CoreBundle\Entity\User')->findOneByUuid($owner->uuid);
+    private function buildUser($owner, $entityManager)
+	{
+		if($owner->uuid == "ZZZZZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZZZZZZZZZ"){ /*opencaching system user uuid is invalid. Replace witch hardcoded valid one*/
+			$owner->uuid = '7a2fdea1-2294-4c3d-9845-9c3aa1947842';
+		}
+		$user = $this->doctrine->getRepository('Oc\CoreBundle\Entity\User')->findOneByUuid($owner->uuid);
         if(!$user){
             $user = new User();
             $user->setUuid($owner->uuid)
@@ -154,7 +240,8 @@ class Import
         return $user;
     }
 
-    private function parseOkapiUserIdentifier($url){
+    private function parseOkapiUserIdentifier($url)
+	{
         $explode = explode('userid=', $url);
         return (int) $explode[1];
     }
