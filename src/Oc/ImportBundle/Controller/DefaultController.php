@@ -4,6 +4,7 @@ namespace Oc\ImportBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Oc\ImportBundle\ImportFactory\Romania;
+use Oc\ImportBundle\ImportFactory\Polska;
 
 class DefaultController extends Controller
 {
@@ -25,13 +26,16 @@ class DefaultController extends Controller
         switch ($ocToImport){
             case 'romania':
                 $importHandler = new Romania();
-                $importHandler->setDoctrine($this->getDoctrine());
+                break;
+            case 'polska':
+                $importHandler = new Polska();
                 break;
         }
 
-        $importHandler->importDump();
+        $importHandler->setDoctrine($this->getDoctrine());
+        $result = $importHandler->importDump();
 
-        return $this->render('OcImportBundle:Default:import.html.twig', array('name' => 'tra la la'));
+        return $this->render('OcImportBundle:Default:import.html.twig', array('name' => $result));
     }
 
 

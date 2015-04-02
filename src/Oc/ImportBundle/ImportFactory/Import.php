@@ -20,6 +20,9 @@ class Import
     protected $doctrine;
 
     private $temp;
+    private $result;
+
+
 
     /**
      * @param \Doctrine\Bundle\DoctrineBundle\Registry $doctrine
@@ -31,16 +34,27 @@ class Import
 
     public function importDump()
     {
-//        ini_set('max_execution_time', 300);
-        set_time_limit(0);
+        ini_set('max_execution_time', 600);
 		$importFilesIndex = json_decode(file_get_contents(__DIR__.'/dumpsToImport/'.$this->ocNodeIdentifier.'/index.json'));
-//        d($importFilesIndex);
-        foreach ($importFilesIndex->data_files as $file) {
-            $partToImport = json_decode(file_get_contents(__DIR__.'/dumpsToImport/'.$this->ocNodeIdentifier.'/'.$file));
-			$this->importObjects($partToImport);
-//          dd($partToImport);
+        $importedFilename = __DIR__.'/dumpsToImport/'.$this->ocNodeIdentifier.'/imported.json';
+        if(file_exists($importedFilename)) {
+            $importedStock = json_decode(file_get_contents($importedFilename));
+        } else {
+            $importedStock = array();
         }
 
+        d($importFilesIndex, $importedStock);
+        foreach ($importFilesIndex->data_files as $file) {
+            if(!in_array($file, $importedStock)) {
+                d($file);
+                $partToImport = json_decode(file_get_contents(__DIR__ . '/dumpsToImport/' . $this->ocNodeIdentifier . '/' . $file));
+                $this->importObjects($partToImport);
+                $importedStock[] = $file;
+                file_put_contents($importedFilename, json_encode($importedStock));
+            }
+        }
+        d($this->result);
+        return true;
     }
 
 	private function importObjects($partToImport)
@@ -81,7 +95,8 @@ class Import
 				->setAuthor($this->buildUser($data->data->user, $entityManager))
 		;
 		$entityManager->persist($geoCacheLog);
-		$entityManager->flush();		
+		$entityManager->flush();
+        $this->result['log']['updated'][] = $data->data->uuid;
 	}
 
 	private function parseOkapiLogType($okapiLogtype)
@@ -154,9 +169,9 @@ class Import
 
             $entityManager->persist($geoCache);
             $entityManager->flush();
-            print 'Dodano'.$import->code.', ';
+            $this->result['geocache']['added'][] = $import->code;
         } else {
-            print 'ten kesz już jest w bazie:'.$import->code;
+            $this->result['geocache']['inDB'] = $import->code;
         }
 	}
 
@@ -177,6 +192,14 @@ class Import
 				return GeoCache::TYPE_QUIZ;
 			case 'Multi':
 				return GeoCache::TYPE_MULTICACHE;
+            case 'Virtual':
+				return GeoCache::TYPE_VIRTUAL;
+            case 'Webcam':
+				return GeoCache::TYPE_WEBCAM;
+            case 'Own':
+				return GeoCache::TYPE_OWNCACHE;
+            case 'Moving':
+				return GeoCache::TYPE_MOVING;
 			default:
 				dd('dodać typ', $okapiType);
 		}
@@ -215,6 +238,10 @@ class Import
                 return GeoCache::SIZE_MICRO;
             case 'small':
                 return GeoCache::SIZE_SMALL;
+            case 'large':
+                return GeoCache::SIZE_LARGE;
+            case 'xlarge':
+                return GeoCache::SIZE_XXL;
 			default:
 				dd('dodać rozmiar', $import->size2, $import->size);
 		}

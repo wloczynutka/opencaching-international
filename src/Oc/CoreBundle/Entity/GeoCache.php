@@ -36,6 +36,8 @@ class GeoCache
     const SIZE_MICRO = 1;
     const SIZE_SMALL = 2;
     const SIZE_REGULAR = 3;
+    const SIZE_LARGE= 4;
+    const SIZE_XXL= 5;
     /**
      * @ORM\Column(type="integer")
      * @ORM\Id
