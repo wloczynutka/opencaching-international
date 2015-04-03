@@ -34,7 +34,7 @@ class Import
 
     public function importDump()
     {
-        ini_set('max_execution_time', 600);
+        ini_set('max_execution_time', 10800);
 		$importFilesIndex = json_decode(file_get_contents(__DIR__.'/dumpsToImport/'.$this->ocNodeIdentifier.'/index.json'));
         $importedFilename = __DIR__.'/dumpsToImport/'.$this->ocNodeIdentifier.'/imported.json';
         if(file_exists($importedFilename)) {
@@ -96,7 +96,8 @@ class Import
 		;
 		$entityManager->persist($geoCacheLog);
 		$entityManager->flush();
-        $this->result['log']['updated'][] = $data->data->uuid;
+        $this->temp = array();
+        // $this->result['log']['updated'][] = $data->data->uuid;
 	}
 
 	private function parseOkapiLogType($okapiLogtype)
@@ -169,9 +170,10 @@ class Import
 
             $entityManager->persist($geoCache);
             $entityManager->flush();
-            $this->result['geocache']['added'][] = $import->code;
+            $this->temp = array();
+//            $this->result['geocache']['added'][] = $import->code;
         } else {
-            $this->result['geocache']['inDB'] = $import->code;
+//            $this->result['geocache']['inDB'] = $import->code;
         }
 	}
 
