@@ -10,7 +10,8 @@ use Doctrine\Common\Collections\ArrayCollection;
  *
  * @author Łza
  * @ORM\Entity
- * @ORM\Table(name="geocaches")
+ * @ORM\Table(name="geocaches", indexes={@ORM\Index(name="search_idx", columns={"code"})})
+ * @ORM\HasLifecycleCallbacks
  */
 class GeoCache
 {
@@ -153,7 +154,7 @@ class GeoCache
 	protected $lastFound;
 
 	/**
-	 * @ORM\Column(type="string")
+	 * @ORM\Column(type="string", nullable=true)
 	 */
 	protected $country;
 
@@ -187,6 +188,8 @@ class GeoCache
      */
 	protected $logs;
 
+
+
     private $cacheLocation = array();
 
 
@@ -203,8 +206,8 @@ class GeoCache
     private $altitude;
 
 	/**
-	 * geocache coordinates object
-	 * @var $coordinates \Oc\CoreBundle\Entity\Coordinates\Coordinates;
+	 * coordinates object
+	 * @var $coordinates \Oc\CoreBundle\Coordinates;
 	 */
 	private $coordinates;
 
@@ -218,13 +221,10 @@ class GeoCache
     {
 		$this->images = new ArrayCollection();
 		$this->descriptions = new ArrayCollection();
+//		$this->coordinates = new \Oc\CoreBundle\Coordinates(array('latitude' => $this->latitude, 'longitude' => $this->longitude));
 
-//        $this->cacheType = $cacheDbRow['type'];
-//        $this->cacheName = $cacheDbRow['name'];
-//        $this->code = $cacheDbRow['wp_oc'];
 //        $this->datePlaced = strtotime($cacheDbRow['date_hidden']);
 //        $this->loadCacheLocation($db);
-//		$this->coordinates = new \lib\Objects\Coordinates\Coordinates($cacheDbRow);
 //        $this->altitude = new \lib\Objects\GeoCache\Altitude($this);
 //        $this->owner = new \lib\Objects\User\User($cacheDbRow['user_id']);
     }
@@ -259,7 +259,7 @@ class GeoCache
     }
 
     /**
-     * @return \lib\Objects\Coordinates\Coordinates
+     * @return \Oc\CoreBundle\Coordinates
      */
     public function getCoordinates()
     {
@@ -1011,5 +1011,12 @@ class GeoCache
     public function getSource()
     {
         return $this->source;
+    }
+
+
+    /** @ORM\PostLoad */
+    public function doStuffOnPostLoad()
+    {
+        $this->coordinates = new \Oc\CoreBundle\Coordinates(array('latitude' => $this->latitude, 'longitude' => $this->longitude));
     }
 }

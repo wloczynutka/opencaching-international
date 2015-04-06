@@ -30,7 +30,7 @@ class GeoCacheDescription
 	protected $language;
 
     /**
-     * @ORM\Column(type="text")
+     * @ORM\Column(name="text_place", type="text")
      */
 	protected $text;
 
@@ -39,7 +39,11 @@ class GeoCacheDescription
      */
 	protected $hint;
 
-
+    /**
+     * @ORM\Column(name="text_geocache", type="text", nullable=true)
+     * for description about how geocache is hidden
+     */
+    protected $textGeocache;
 
     /**
      * Get id
@@ -138,5 +142,28 @@ class GeoCacheDescription
     public function getHint()
     {
         return $this->hint;
+    }
+
+    /**
+     * Set textGeocache
+     *
+     * @param string $textGeocache
+     * @return GeoCacheDescription
+     */
+    public function setTextGeocache($textGeocache)
+    {
+        $this->textGeocache = $textGeocache;
+
+        return $this;
+    }
+
+    /**
+     * Get textGeocache
+     *
+     * @return string 
+     */
+    public function getTextGeocache()
+    {
+        return $this->textGeocache;
     }
 }

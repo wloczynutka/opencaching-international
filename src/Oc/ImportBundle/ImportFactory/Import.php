@@ -16,13 +16,14 @@ class Import
 {
     protected $ocNodeIdentifier = null;
     protected $ocNodeIdentifierInt;
+    protected $updateUrl;
+    protected $consumerKey;
 
     protected $doctrine;
+    protected $remoteSystemCredentials;
 
     private $temp;
     private $result;
-
-
 
     /**
      * @param \Doctrine\Bundle\DoctrineBundle\Registry $doctrine
@@ -32,9 +33,113 @@ class Import
         $this->doctrine = $doctrine;
     }
 
+    /**
+     * @param array $remoteSystemCredentials
+     */
+    public function setRemoteSystemCredentials($remoteSystemCredentials)
+	{
+        $this->remoteSystemCredentials = $remoteSystemCredentials;
+    }
+
+    public function update()
+    {
+        // $entityManager = $this->doctrine->getManager();
+        $lastSyncData = $this->doctrine->getRepository('Oc\ImportBundle\Entity\Synchronisation')->findOneByRemoteSystemId($this->ocNodeIdentifierInt);
+        d($lastSyncData);
+        if($lastSyncData){
+            $dataJson = file_get_contents($this->updateUrl.$lastSyncData->getSyncRevision().'&consumer_key='.$this->remoteSystemCredentials['consumer_key']);
+            $dataToUpdate = json_decode($dataJson);
+            foreach ($dataToUpdate->changelog as $objToUpdate) {
+                if($objToUpdate->object_type == 'geocache'){
+                    $this->updateGeocache($objToUpdate);
+                }
+
+            }
+
+            dd($this, $dataToUpdate);
+
+        }
+    }
+    
+    private function updateGeocache($objToUpdate)
+    {
+        $geoCache = $this->loadGeocacheFromDbByCode($objToUpdate->object_key->code);
+        $import = $objToUpdate->data;
+        $nId = $this->ocNodeIdentifier;
+        if(isset($import->names->$nId)){
+            $geoCache->setName($import->names->$nId);
+        }
+        if(isset($import->notfounds)){
+            $geoCache->setNotFoundCount($import->notfounds);
+        }
+        if(isset($import->founds)){
+            $geoCache->setFoundCount($import->founds);
+        }
+        if(isset($import->terrain)){
+            $geoCache->setTerrain($import->terrain);
+        }
+        if(isset($import->type)){
+            $geoCache->setType($this->parseGeocacheType($import->type));
+        }
+        if(isset($import->difficulty)){
+            $geoCache->setDifficulty($import->difficulty);
+        }
+        if(isset($import->rating)){
+            $geoCache->setRating((float) $import->rating);
+        }
+        if(isset($import->status)){
+            $geoCache->setStatus($this->parseGeocacheStatus($import->status));
+        }
+        if(isset($import->willattends)){
+            $geoCache->setWillattendCount($import->willattends);
+        }
+        if(isset($import->size2)){
+            $geoCache->setSize($this->parseGeocacheSize($import));
+        }
+        if(isset($import->rating_votes)){
+            $geoCache->setRatingVotesCount($import->rating_votes);
+        }
+        if(isset($import->recommendations)){
+            $geoCache->setRecommendations($import->recommendations);
+        }
+
+
+        if(isset($import->last_found)){
+            $geoCache->setLastFound(new \DateTime($import->last_found));
+        }
+        if(isset($import->last_modified)){
+            $geoCache->setDateModified(new \DateTime($import->last_modified));
+        }
+        if(isset($import->date_created)){
+            $geoCache->setDateCreated(new \DateTime($import->date_created));
+        }
+        if(isset($import->date_hidden)){
+            $geoCache->setDatePlaced(new \DateTime($import->date_hidden));
+        }
+
+
+        dd($geoCache);
+
+//            ->setLatitude($coordinates[0])
+//            ->setLongitude($coordinates[1])
+//
+//            ->setOwner($this->buildUser($import->owner, $entityManager))
+//            ->setCountry($import->country)
+//            ->setState($import->state)
+//            ->setSource($this->ocNodeIdentifierInt)
+        ;
+        $this->addDescriptionsFromOkapi($geoCache, $import->descriptions, $import->hints, $entityManager);
+        $this->addImagesFromOkapi($geoCache, $import->images, $entityManager);
+        $this->addAttributesFromOkapi($geoCache, $import->attr_acodes, $entityManager);
+        $this->addWaypointsFromOkapi($geoCache, $import->alt_wpts, $entityManager);
+
+
+        dd($objToUpdate, $geoCache);
+    }
+
     public function importDump()
     {
-        ini_set('max_execution_time', 10800);
+        ini_set('max_execution_time', 600);
 		$importFilesIndex = json_decode(file_get_contents(__DIR__.'/dumpsToImport/'.$this->ocNodeIdentifier.'/index.json'));
         $importedFilename = __DIR__.'/dumpsToImport/'.$this->ocNodeIdentifier.'/imported.json';
         if(file_exists($importedFilename)) {
@@ -46,7 +151,6 @@ class Import
         d($importFilesIndex, $importedStock);
         foreach ($importFilesIndex->data_files as $file) {
             if(!in_array($file, $importedStock)) {
-                d($file);
                 $partToImport = json_decode(file_get_contents(__DIR__ . '/dumpsToImport/' . $this->ocNodeIdentifier . '/' . $file));
                 $this->importObjects($partToImport);
                 $importedStock[] = $file;
@@ -70,6 +174,11 @@ class Import
 		}
 	}
 
+    private function loadGeocacheFromDbByCode($code){
+		$geoCache = $this->doctrine->getRepository('Oc\CoreBundle\Entity\GeoCache')->findOneByCode($code);
+        return $geoCache;
+    }
+
 	/**
 	 * import or update geocache logs from okapi
 	 * @param stdClass $data
@@ -77,7 +186,7 @@ class Import
 	private function importLog($data)
 	{
 		$entityManager = $this->doctrine->getManager();
-		$geoCache = $this->doctrine->getRepository('Oc\CoreBundle\Entity\GeoCache')->findOneByCode($data->data->cache_code);
+		$geoCache = $this->loadGeocacheFromDbByCode($data->data->cache_code);
 		if(!$geoCache){
 			dd('barak geoCache', $data);
 		}
@@ -256,6 +365,7 @@ class Import
 		}
 		$user = $this->doctrine->getRepository('Oc\CoreBundle\Entity\User')->findOneByUuid($owner->uuid);
         if(!$user){
+            $this->findDuplicatedUserAndRenameIt($owner);
             $user = new User();
             $user->setUuid($owner->uuid)
                  ->setUsername($owner->username)
@@ -267,6 +377,13 @@ class Import
             $entityManager->persist($user);
         }
         return $user;
+    }
+
+    private function findDuplicatedUserAndRenameIt($owner){
+        $user = $this->doctrine->getRepository('Oc\CoreBundle\Entity\User')->findOneByUsername_canonical($owner->username);
+        if($user){
+            $owner->username = $owner->username . '(' . $this->ocNodeIdentifier . ')';
+        }
     }
 
     private function parseOkapiUserIdentifier($url)

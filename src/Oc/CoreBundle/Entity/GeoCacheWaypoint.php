@@ -8,6 +8,7 @@ use Oc\CoreBundle\Entity\GeoCacheWaypointType;
 /**
  * @ORM\Entity
  * @ORM\Table(name="geocaches_waypoints")
+ * @ORM\HasLifecycleCallbacks
  */
 class GeoCacheWaypoint
 {
@@ -49,6 +50,13 @@ class GeoCacheWaypoint
      * @ORM\Column(type="text")
      */
     protected $description;
+
+    /**
+     * coordinates object
+     * @var $coordinates \Oc\CoreBundle\Coordinates;
+     */
+    private $coordinates;
+
 
     /**
      * Get id
@@ -196,5 +204,19 @@ class GeoCacheWaypoint
     public function getType()
     {
         return $this->type;
+    }
+
+    /**
+     * @return \Oc\CoreBundle\Coordinates
+     */
+    public function getCoordinates()
+    {
+        return $this->coordinates;
+    }
+
+    /** @ORM\PostLoad */
+    public function doStuffOnPostLoad()
+    {
+        $this->coordinates = new \Oc\CoreBundle\Coordinates(array('latitude' => $this->latitude, 'longitude' => $this->longitude));
     }
 }

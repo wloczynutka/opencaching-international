@@ -1,6 +1,6 @@
 <?php
 
-namespace Oc\CoreBundle\Entity\Coordinates;
+namespace Oc\CoreBundle;
 
 /**
  * Coordinates keep and converts geographical coordinates

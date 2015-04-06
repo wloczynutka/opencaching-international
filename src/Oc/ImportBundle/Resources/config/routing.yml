@@ -1,3 +1,7 @@
 oc_import_homepage:
     path:     /import/{ocToImport}
     defaults: { _controller: OcImportBundle:Default:import }
+
+oc_import_update:
+    path:     /update/system
+    defaults: { _controller: OcImportBundle:Default:update }
