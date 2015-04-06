@@ -1,0 +1,7 @@
+display_homepage:
+    path:    /show/geocache/{code}
+    defaults: { _controller: DisplayBundle:Default:geocache }
+
+display_user:
+    path:    /show/user/{uuid}
+    defaults: { _controller: DisplayBundle:Default:user }

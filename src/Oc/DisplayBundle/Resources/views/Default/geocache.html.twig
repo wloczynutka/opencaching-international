@@ -1,0 +1,81 @@
+<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script type="text/javascript">
+function initialize() {
+    var mapOptions = {
+        zoom: 16,
+        center: new google.maps.LatLng({{ javascriptVars.mapCenter.latitude }}, {{ javascriptVars.mapCenter.longitude }})
+    };
+
+    var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+    var marker = new google.maps.Marker({
+        position: new google.maps.LatLng({{ javascriptVars.mapCenter.latitude }}, {{ javascriptVars.mapCenter.longitude }}),
+        map: map,
+        title:"{{ code }} {{ name }}"
+    });
+
+    {% for waypoint in javascriptVars.waypoints %}
+    var marker = new google.maps.Marker({
+        position: new google.maps.LatLng({{ waypoint.latitude }}, {{ waypoint.longitude }}),
+        icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
+        map: map,
+        title:"{{ waypoint.name }}"
+    });
+    {% endfor %}
+
+}
+
+function loadScript() {
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = 'https://maps.googleapis.com/maps/api/js?v=3.exp' +
+      '&signed_in=true&callback=initialize';
+    document.body.appendChild(script);
+}
+
+
+// To add the marker to the map, call setMap();
+
+
+window.onload = loadScript;
+
+
+
+</script>
+    <style type="text/css">
+      #map-canvas { height: 300px; width:800px; margin: 0; padding: 0;}
+    </style>
+</head>
+<body>
+<div id="map-canvas"></div>
+
+AAA {{ trexample }} AAA<br><br>
+
+{% trans %}Geocache code{% endtrans %}: {{ code }} <br>
+{% trans %}Geocache name{% endtrans %}: {{ name }} <br>
+{% trans %}Status{% endtrans %}: {{ status }} <br>
+{% trans %}Owner{% endtrans %}: <a href="/show/user/{{ owner.uuid }}">{{ owner.name }}</a>
+{% trans %}latitude{% endtrans %}: {{ latitude }}  <br>
+{% trans %}longitude{% endtrans %} {{ longitude }}  <br>
+
+Waypoints:
+{% for waypoint in waypoints %}
+    wpt name: {{ waypoint.name }}<br />
+    wpt description: {{ waypoint.description }}<br />
+{% endfor %}
+
+{% for description in descriptions %}
+	<hr>
+    <p>Language: {{ description.language }}</p>
+    <p>Geocache container description: {{ description.geocache }}</p>
+    <p>Geocache place description: {{ description.place }}</p>
+    <p>hint: {{ description.hint }}</p>
+{% endfor %}
+
+
+
+
+
+
+
+</body>
+</html>
