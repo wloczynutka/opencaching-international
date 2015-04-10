@@ -20,7 +20,8 @@
     "sensio/framework-extra-bundle": "~3.0,>=3.0.2",
     "incenteev/composer-parameter-handler": "~2.0",
     "raveren/kint": "v0.9.1",
-    "friendsofsymfony/user-bundle": "~2.0@dev"
+    "friendsofsymfony/user-bundle": "~2.0@dev",
+    "umpirsky/twig-gettext-extractor": "1.1.*"
   },
   "require-dev": {
     "sensio/generator-bundle": "~2.3"

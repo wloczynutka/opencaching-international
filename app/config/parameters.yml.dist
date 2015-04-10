@@ -18,3 +18,11 @@ parameters:
 
     # A secret key that's used to generate certain security-related tokens
     secret:            ThisTokenIsNotSoSecretChangeIt
+
+    remote_systems_credentials:
+      2:
+        consumer_key: yourPLOkapiKey
+        secret: yoursecret
+      16:
+        consumer_key: yourROOkapiKey
+        secret: yoursecret

@@ -149,15 +149,23 @@ class Import
         }
 
         d($importFilesIndex, $importedStock);
+        $loop = 1;
         foreach ($importFilesIndex->data_files as $file) {
             if(!in_array($file, $importedStock)) {
-                $partToImport = json_decode(file_get_contents(__DIR__ . '/dumpsToImport/' . $this->ocNodeIdentifier . '/' . $file));
+                $filePath = __DIR__ . '/dumpsToImport/' . $this->ocNodeIdentifier . '/' . $file;
+                $partToImport = json_decode(file_get_contents($filePath));
                 $this->importObjects($partToImport);
                 $importedStock[] = $file;
                 file_put_contents($importedFilename, json_encode($importedStock));
+                d($file);
+                unlink($filePath);
+                $loop++;
+            }
+            if($loop > 2){
+                break;
             }
         }
-        d($this->result);
+        d('koniec');
         return true;
     }
 
@@ -193,7 +201,9 @@ class Import
 		$geoCacheLog = $this->doctrine->getRepository('Oc\CoreBundle\Entity\GeoCacheLog')->findOneByUuid($data->data->uuid);
 		if(!$geoCacheLog){
 			$geoCacheLog = new GeoCacheLog();
-		}
+		} else {
+            return;
+        }
 		$geoCacheLog
 				->setUuid($data->data->uuid)
 				->setType($this->parseOkapiLogType($data->data->type))
@@ -228,6 +238,14 @@ class Import
 				return GeoCacheLog::LOGTYPE_ACTIVATED;
 			case 'Will attend':
 				return GeoCacheLog::LOGTYPE_WILLATTEND;
+            case "Didn't find it":
+				return GeoCacheLog::LOGTYPE_DIDNOTFIND;
+            case 'Needs maintenance':
+				return GeoCacheLog::LOGTYPE_NEEDMAINTENANCE;
+            case 'OC Team comment':
+				return GeoCacheLog::LOGTYPE_OCTEAMCOMMENT;
+            case 'Moved':
+				return GeoCacheLog::LOGTYPE_MOVED;
 			default:
 				dd('TODO: dodac brakujacy typ logu', $okapiLogtype);
 		}
@@ -380,9 +398,14 @@ class Import
     }
 
     private function findDuplicatedUserAndRenameIt($owner){
-        $user = $this->doctrine->getRepository('Oc\CoreBundle\Entity\User')->findOneByUsername_canonical($owner->username);
-        if($user){
-            $owner->username = $owner->username . '(' . $this->ocNodeIdentifier . ')';
+        while(true){
+            $user = $this->doctrine->getRepository('Oc\CoreBundle\Entity\User')->findOneByUsername_canonical($owner->username);
+            if($user){
+                $owner->username = $owner->username . '(' . $this->ocNodeIdentifier . ')';
+                d($owner->username);
+            } else {
+                return;
+            }
         }
     }
 

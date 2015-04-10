@@ -37,6 +37,7 @@ class GeoCacheLog
     const LOGTYPE_SERVICED = 9;
     const LOGTYPE_ACTIVATED = 10;
     const LOGTYPE_WILLATTEND = 11;
+    const LOGTYPE_OCTEAMCOMMENT = 12;
 
     /**
      * @ORM\Column(type="integer")
