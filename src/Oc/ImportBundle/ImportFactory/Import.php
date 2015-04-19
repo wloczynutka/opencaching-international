@@ -19,11 +19,14 @@ class Import
     protected $updateUrl;
     protected $consumerKey;
 
+
     protected $doctrine;
     protected $remoteSystemCredentials;
 
     private $temp;
-    private $result;
+    private $insertedRecords = 0;
+
+    private $flatImport = true;
 
     /**
      * @param \Doctrine\Bundle\DoctrineBundle\Registry $doctrine
@@ -139,7 +142,9 @@ class Import
 
     public function importDump()
     {
-        ini_set('max_execution_time', 600);
+        ini_set('max_execution_time', 300);
+        $timeStart = microtime(true);
+
 		$importFilesIndex = json_decode(file_get_contents(__DIR__.'/dumpsToImport/'.$this->ocNodeIdentifier.'/index.json'));
         $importedFilename = __DIR__.'/dumpsToImport/'.$this->ocNodeIdentifier.'/imported.json';
         if(file_exists($importedFilename)) {
@@ -149,7 +154,7 @@ class Import
         }
 
         d($importFilesIndex, $importedStock);
-        $loop = 1;
+        $loop = 0;
         foreach ($importFilesIndex->data_files as $file) {
             if(!in_array($file, $importedStock)) {
                 $filePath = __DIR__ . '/dumpsToImport/' . $this->ocNodeIdentifier . '/' . $file;
@@ -161,11 +166,13 @@ class Import
                 unlink($filePath);
                 $loop++;
             }
-            if($loop > 2){
+            if($loop > 4){
                 break;
             }
         }
-        d('koniec');
+        //dividing with 60 will give the execution time in minutes other wise seconds
+        $executionTime = microtime(true) - $timeStart;
+        d('koniec', $executionTime, $this->insertedRecords);
         return true;
     }
 
@@ -187,13 +194,76 @@ class Import
         return $geoCache;
     }
 
+	private function importLogFlat($data)
+
+    {
+        $logId = $this->getIdByCode('uuid', 'GeoCacheLog', $data->data->uuid);
+        if($logId){ /* log exist, ignore */
+            return;
+        }
+        $geoCacheId = $this->getIdByCode('code', 'Geocache', $data->data->cache_code);
+        $logOwnerId = $this->getIdByCode('uuid', 'User', $data->data->user->uuid);
+
+        if(!$geoCacheId){
+            dd($geoCacheId,$data);
+        }
+        $em = $this->doctrine->getManager();
+        if(!$logOwnerId){
+            $user = $this->buildUser($data->data->user, $em);
+            $em->flush();
+            $this->insertedRecords++;
+            $logOwnerId = $user->getId();
+        }
+
+//        d($data);
+
+        $sql = 'INSERT INTO `geocaches_logs`(`geocache_id`, `owner`, `uuid`, `datetime`, `type`, `recommendation`, `text`) VALUES (:geoCacheId, :logOwnerId, :uuid, :datetime, :type, :recommendation, :text)';
+        $stmt = $em->getConnection()->prepare($sql);
+        $stmt->bindValue(':geoCacheId', $geoCacheId);
+        $stmt->bindValue(':logOwnerId', $logOwnerId);
+        $stmt->bindValue(':uuid', $data->data->uuid);
+        $stmt->bindValue(':datetime', $data->data->date);
+        $stmt->bindValue(':type', $this->parseOkapiLogType($data->data->type));
+        $stmt->bindValue(':recommendation', $data->data->was_recommended);
+        $stmt->bindValue(':text', $this->purifyHtml($data->data->comment));
+        $stmt->execute();
+        $this->insertedRecords++;
+    }
+
+    private function importUserFlat($user){
+//        $em = $this->doctrine->getManager()
+//        $sql = 'INSERT INTO `fos_user`(`username`, `username_canonical`, `email`, `email_canonical`, `enabled`, `salt`, `password`, `last_login`, `locked`, `expired`, `expires_at`, `confirmation_token`, `password_requested_at`, `roles`, `credentials_expired`, `credentials_expire_at`, `origin_identifier`, `uuid`, `url`)
+//                              VALUES ([value-2],[value-3],[value-4],[value-5],[value-6],[value-7],[value-8],[value-9],[value-10],[value-11],[value-12],[value-13],[value-14],[value-15],[value-16],[value-17],[value-18],[value-19],[value-20])';
+//        $stmt = $em->getConnection()->prepare($sql);
+//        $stmt->bindValue(':geoCacheId', $geoCacheId);
+//        dd($user);
+    }
+
+    private function getIdByCode($fieldName, $objectName, $value){
+        $geoCacheQuery = $this->doctrine->getRepository('Oc\CoreBundle\Entity\\'.$objectName)->createQueryBuilder('r')
+            ->select('r.id')
+            ->where('r.'.$fieldName.' = :value')
+            ->setParameter('value', $value)
+            ->getQuery();
+        $result = $geoCacheQuery->getArrayResult();
+        if(empty($result)){
+            return false;
+        } else {
+            return $result[0]['id'];
+        }
+    }
+
 	/**
 	 * import or update geocache logs from okapi
 	 * @param stdClass $data
 	 */
 	private function importLog($data)
 	{
-		$entityManager = $this->doctrine->getManager();
+		if($this->flatImport){
+            return $this->importLogFlat($data);
+        }
+
+        $entityManager = $this->doctrine->getManager();
 		$geoCache = $this->loadGeocacheFromDbByCode($data->data->cache_code);
 		if(!$geoCache){
 			dd('barak geoCache', $data);
@@ -250,10 +320,9 @@ class Import
 				dd('TODO: dodac brakujacy typ logu', $okapiLogtype);
 		}
 	}
-
 	private function importGeocache($import)
 	{
-		$nId = $this->ocNodeIdentifier;
+        $nId = $this->ocNodeIdentifier;
 		if(!isset($import->location)){
 			dd($import);
 		}
@@ -402,7 +471,6 @@ class Import
             $user = $this->doctrine->getRepository('Oc\CoreBundle\Entity\User')->findOneByUsername_canonical($owner->username);
             if($user){
                 $owner->username = $owner->username . '(' . $this->ocNodeIdentifier . ')';
-                d($owner->username);
             } else {
                 return;
             }
@@ -496,5 +564,12 @@ class Import
             $this->temp['addedGeoCacheWaypointType'][$waypoint->type] = $geoCacheWaypointType;
         }
         return $geoCacheWaypointType;
+    }
+
+    private function purifyHtml($htmlBad)
+    {
+        // TODO - add html purification
+        $htmlGood = $htmlBad;
+        return $htmlGood;
     }
 }
