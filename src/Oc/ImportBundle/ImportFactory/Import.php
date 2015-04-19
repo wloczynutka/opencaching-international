@@ -142,7 +142,7 @@ class Import
 
     public function importDump()
     {
-        ini_set('max_execution_time', 300);
+        ini_set('max_execution_time', 350);
         $timeStart = microtime(true);
 
 		$importFilesIndex = json_decode(file_get_contents(__DIR__.'/dumpsToImport/'.$this->ocNodeIdentifier.'/index.json'));
@@ -217,7 +217,7 @@ class Import
 
 //        d($data);
 
-        $sql = 'INSERT INTO `geocaches_logs`(`geocache_id`, `owner`, `uuid`, `datetime`, `type`, `recommendation`, `text`) VALUES (:geoCacheId, :logOwnerId, :uuid, :datetime, :type, :recommendation, :text)';
+        $sql = 'INSERT INTO `geocaches_logs`(`geocache_id`, `owner`, `uuid`, `datetime`, `type`, `recommendation`, `text`, `sync_datetime`) VALUES (:geoCacheId, :logOwnerId, :uuid, :datetime, :type, :recommendation, :text, :syncDatetime)';
         $stmt = $em->getConnection()->prepare($sql);
         $stmt->bindValue(':geoCacheId', $geoCacheId);
         $stmt->bindValue(':logOwnerId', $logOwnerId);
@@ -226,17 +226,10 @@ class Import
         $stmt->bindValue(':type', $this->parseOkapiLogType($data->data->type));
         $stmt->bindValue(':recommendation', $data->data->was_recommended);
         $stmt->bindValue(':text', $this->purifyHtml($data->data->comment));
+        $stmt->bindValue(':syncDatetime', time());
         $stmt->execute();
+//        $stmt->
         $this->insertedRecords++;
-    }
-
-    private function importUserFlat($user){
-//        $em = $this->doctrine->getManager()
-//        $sql = 'INSERT INTO `fos_user`(`username`, `username_canonical`, `email`, `email_canonical`, `enabled`, `salt`, `password`, `last_login`, `locked`, `expired`, `expires_at`, `confirmation_token`, `password_requested_at`, `roles`, `credentials_expired`, `credentials_expire_at`, `origin_identifier`, `uuid`, `url`)
-//                              VALUES ([value-2],[value-3],[value-4],[value-5],[value-6],[value-7],[value-8],[value-9],[value-10],[value-11],[value-12],[value-13],[value-14],[value-15],[value-16],[value-17],[value-18],[value-19],[value-20])';
-//        $stmt = $em->getConnection()->prepare($sql);
-//        $stmt->bindValue(':geoCacheId', $geoCacheId);
-//        dd($user);
     }
 
     private function getIdByCode($fieldName, $objectName, $value){

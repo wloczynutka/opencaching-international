@@ -86,6 +86,16 @@ class GeoCacheLog
      */
 	protected $text;
 
+    /**
+     * @ORM\Column(type="datetime", name="sync_datetime")
+     */
+	protected $syncDatetime;
+
+
+    public function __construct()
+    {
+        $this->syncDatetime = new DateTime();
+    }
 
     /**
      * Get id
@@ -106,7 +116,6 @@ class GeoCacheLog
     public function setUuid($uuid)
     {
         $this->uuid = $uuid;
-
         return $this;
     }
 
@@ -129,7 +138,6 @@ class GeoCacheLog
     public function setDateTime($dateTime)
     {
         $this->dateTime = $dateTime;
-
         return $this;
     }
 
@@ -152,7 +160,6 @@ class GeoCacheLog
     public function setType($type)
     {
         $this->type = $type;
-
         return $this;
     }
 
@@ -175,7 +182,6 @@ class GeoCacheLog
     public function setRecommendation($recommendation)
     {
         $this->recommendation = $recommendation;
-
         return $this;
     }
 
@@ -256,5 +262,28 @@ class GeoCacheLog
     public function getAuthor()
     {
         return $this->author;
+    }
+
+    /**
+     * Set syncDatetime
+     *
+     * @param \DateTime $syncDatetime
+     * @return GeoCacheLog
+     */
+    public function setSyncDatetime($syncDatetime)
+    {
+        $this->syncDatetime = $syncDatetime;
+
+        return $this;
+    }
+
+    /**
+     * Get syncDatetime
+     *
+     * @return \DateTime 
+     */
+    public function getSyncDatetime()
+    {
+        return $this->syncDatetime;
     }
 }
