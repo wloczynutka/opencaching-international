@@ -5,3 +5,7 @@ display_homepage:
 display_user:
     path:    /show/user/{uuid}
     defaults: { _controller: DisplayBundle:Default:user }
+
+search_nearest_geocaches:
+    path:    /find/geocaches/radius/{latitude}/{longitude}/{radius}
+    defaults: { _controller: DisplayBundle:Search:findNearestGeocache }
